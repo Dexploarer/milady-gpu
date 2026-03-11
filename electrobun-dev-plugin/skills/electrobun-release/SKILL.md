@@ -1,135 +1,287 @@
 ---
 name: Electrobun Release
-description: Use when distributing Electrobun apps, configuring auto-updates, uploading release artifacts, understanding bsdiff patches, or integrating the Updater API. Activates on release config, update.json, or artifact upload work.
-version: 1.0.0
+description: Use when distributing Electrobun apps, configuring auto-updates, uploading artifacts, understanding update channels, or integrating the Updater API. Covers artifact naming, update.json format, bsdiff patch generation, upload targets, and the full Updater lifecycle.
+version: 2.0.0
 ---
 
-# Electrobun Release & Auto-Update
+# Electrobun Release
 
-## Release Pipeline Overview
+Publishing an Electrobun app means hosting a static set of artifacts and pointing the app's `baseUrl` at them. The Updater polls `update.json`, downloads the tarball or a binary patch, and replaces the running app.
 
-```
-1. Bump app.version in electrobun.config.ts
-2. electrobun build --env=canary   (or --env=stable)
-3. Upload artifacts/ to release.baseUrl
-4. Verify update.json is reachable
-5. Running apps auto-detect and apply the update
-```
+---
 
-## Config Requirements
+## Release Channels
+
+| Channel | Built with | Updates | Codesign |
+|---------|-----------|---------|---------|
+| `stable` | `--env=stable` | Yes | Required |
+| `canary` | `--env=canary` | Yes | Required |
+| `dev` | `electrobun dev` | Disabled | Skipped |
+
+Each channel is independent: a user can have `MyApp` (stable) and `MyApp-canary` (canary) installed side-by-side. App data lives in separate directories per channel:
+
+- macOS: `~/Library/Application Support/{identifier}/{channel}/`
+- Windows: `%LOCALAPPDATA%/{identifier}/{channel}/`
+- Linux: `~/.local/share/{identifier}/{channel}/`
+
+---
+
+## Configuration
 
 ```typescript
 // electrobun.config.ts
-app: {
-  version: "1.2.3",  // bump this for each release
-},
-release: {
-  baseUrl: "https://cdn.example.com/releases/myapp",
-  generatePatch: true,  // creates bsdiff delta (smaller downloads)
-},
+export default defineConfig({
+  release: {
+    baseUrl:       "https://updates.example.com/",  // required for updates
+    generatePatch: true,                             // default: true
+  }
+});
 ```
 
-The build system appends `/<os>-<arch>-update.json` to `baseUrl` to form the update manifest URL.
-Example: `https://cdn.example.com/releases/myapp/macos-arm64-update.json`
+`baseUrl` is embedded in `version.json` at build time. The Updater reads it at runtime to construct all update URLs. Without `baseUrl`, updates are silently disabled.
 
-## Canary vs Stable
+---
 
-| Channel | Use for | Version convention |
-|---|---|---|
-| `canary` | Beta testers, internal QA | `1.2.3-canary.4` or just `1.2.3` |
-| `stable` | All users, production | `1.2.3` |
+## Artifact Naming
 
-Apps subscribe to a channel. A stable app will not pick up a canary update.
+All remote artifacts follow `{channel}-{os}-{arch}-{filename}`.
 
-## Artifact Files Explained
+OS strings: `macos` / `win` / `linux`
 
-After `electrobun build --env=canary`:
+### Update Manifest
 
 ```
-artifacts/
-├── macos-arm64-canary-1.2.3.tar.zst   # Full bundle (zstd compressed)
-├── macos-arm64-canary-1.2.3.patch     # bsdiff patch from previous version
-├── macos-arm64-update.json            # Manifest fetched by running apps
-└── macos-arm64-canary-1.2.3.dmg      # Installer for fresh installs
+{channel}-{os}-{arch}-update.json
+
+Examples:
+  stable-macos-arm64-update.json
+  stable-macos-x64-update.json
+  stable-win-x64-update.json
+  stable-linux-x64-update.json
+  canary-macos-arm64-update.json
+  canary-linux-arm64-update.json
 ```
 
-**bsdiff patch**: Electrobun downloads the previous release's `.tar.zst` from `baseUrl`, diffs it against the new one, and writes a binary patch. If the previous release isn't found, patch generation is skipped (full bundle used instead).
+Contents:
+```json
+{
+  "version":  "1.2.0",
+  "hash":     "<sha256-of-uncompressed-tarball>",
+  "platform": "macos",
+  "arch":     "arm64"
+}
+```
+
+### App Tarballs
+
+```
+macOS:        {channel}-{os}-{arch}-{AppName}[-{channel}].app.tar.zst
+Windows/Linux: {channel}-{os}-{arch}-{AppName}[-{channel}].tar.zst
+
+Stable examples (no channel suffix in app name):
+  stable-macos-arm64-MyApp.app.tar.zst
+  stable-macos-x64-MyApp.app.tar.zst
+  stable-win-x64-MyApp.tar.zst
+  stable-linux-x64-MyApp.tar.zst
+  stable-linux-arm64-MyApp.tar.zst
+
+Canary examples (channel suffix in app name):
+  canary-macos-arm64-MyApp-canary.app.tar.zst
+  canary-win-x64-MyApp-canary.tar.zst
+```
+
+### Patch Files
+
+```
+{channel}-{os}-{arch}-{fromHash}.patch
+
+Example:
+  stable-macos-arm64-abc123def456.patch
+```
+
+Patches are generated via `bsdiff` when a previous `update.json` and tarball are available from `baseUrl` at build time. If patch generation fails, the full tarball is the fallback.
+
+### Installers (for first install, not updates)
+
+| Platform | Stable | Canary |
+|----------|--------|--------|
+| macOS | `MyApp.dmg` | `MyApp-canary.dmg` |
+| Windows | `MyApp-Setup.zip` (contains `MyApp-Setup.exe`) | `MyApp-Setup-canary.zip` |
+| Linux | `MyApp-Setup.AppImage` | `MyApp-Setup-canary.AppImage` |
+
+---
+
+## Update Server URLs
+
+The Updater constructs all URLs as:
+```
+{baseUrl}/{artifact-filename}
+```
+
+For a `stable` build at `https://updates.example.com/`:
+
+| URL | Purpose |
+|-----|---------|
+| `https://updates.example.com/stable-macos-arm64-update.json` | Version check |
+| `https://updates.example.com/stable-macos-arm64-MyApp.app.tar.zst` | Full download |
+| `https://updates.example.com/stable-macos-arm64-abc123.patch` | Incremental patch |
+
+This flat URL scheme works with any static file host: Cloudflare R2, AWS S3, GitHub Releases, or plain nginx.
+
+---
+
+## Updater API
+
+```typescript
+import { Updater } from "electrobun/bun";
+
+// 1. Check for update
+const status = await Updater.checkForUpdate();
+// status: "checking" | "update-available" | "no-update" | "error"
+
+// 2. Download update (tries patch first, falls back to full tarball)
+await Updater.downloadUpdate();
+// status: "downloading" → "update-ready"
+
+// 3. Apply update (replaces bundle, relaunches)
+await Updater.applyUpdate();
+
+// Read current app info
+const info = await Updater.getLocalInfo();
+// { version, hash, channel, baseUrl, name, identifier }
+
+// Read update info (available version)
+const update = await Updater.updateInfo();
+
+// Track status changes
+Updater.onStatusChange((status) => {
+  console.log("Updater status:", status);
+});
+
+// Granular history
+const history = await Updater.getStatusHistory();
+await Updater.clearStatusHistory();
+```
+
+### Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `checking` | Fetching `update.json` |
+| `update-available` | Remote hash differs from local hash |
+| `no-update` | Hashes match — already current |
+| `downloading` | Downloading patch or tarball |
+| `update-ready` | Download complete and verified |
+| `error` | Any step failed |
+
+### How Version Checking Works
+
+1. Fetches `{baseUrl}/{channel}-{os}-{arch}-update.json`
+2. Compares remote `hash` to local `hash` in `Resources/version.json`
+3. If hashes differ → `update-available`
+4. If identical → `no-update`
+
+Hash is SHA-256 of the **uncompressed** tarball contents.
+
+---
+
+## Download Strategy
+
+1. **Try patch first:** fetch `{channel}-{os}-{arch}-{currentHash}.patch`
+2. Apply patch via `bspatch` to the local cached tarball
+3. **If patch missing or fails:** download full `.tar.zst` tarball
+4. Decompress with `zig-zstd`
+
+Local cache directory (intermediate files during update):
+```
+macOS:   ~/Library/Application Support/{id}/{channel}/self-extraction/
+Windows: %LOCALAPPDATA%/{id}/{channel}/self-extraction/
+Linux:   ~/.local/share/{id}/{channel}/self-extraction/
+```
+
+Contains: current tarball, next tarball, temp patch, compressed bundles.
+
+---
+
+## Apply Update — Platform Specifics
+
+| Platform | Method |
+|----------|--------|
+| macOS | Removes quarantine attribute, replaces `.app` bundle, relaunches |
+| Windows | Helper script handles file locking before replacing `.exe` |
+| Linux | Replaces `.AppImage` or extracted directory, relaunches |
+
+---
 
 ## Uploading Artifacts
 
-Upload everything in `artifacts/` to `<baseUrl>/`:
+### Cloudflare R2 (recommended)
 
 ```bash
-# S3 example
-aws s3 sync artifacts/ s3://my-bucket/releases/myapp/ --acl public-read
+# Using wrangler
+wrangler r2 object put mybucket/stable-macos-arm64-update.json \
+  --file artifacts/stable-macos-arm64-update.json
 
-# Cloudflare R2 example
-rclone sync artifacts/ r2:my-bucket/releases/myapp/
-
-# Generic rsync
-rsync -avz artifacts/ user@server:/var/www/releases/myapp/
+# Using AWS CLI (R2 is S3-compatible)
+aws s3 cp artifacts/ s3://mybucket/ \
+  --recursive \
+  --endpoint-url https://<accountid>.r2.cloudflarestorage.com
 ```
 
-The `update.json` file must be at exactly `<baseUrl>/<os>-<arch>-update.json`.
+### AWS S3
 
-## Updater API (in-app)
-
-```typescript
-import { Updater } from "electrobun/bun";
-
-const updater = new Updater();
-
-// Check for update
-const status = await updater.checkForUpdates();
-// status.hasUpdate: boolean
-// status.version: string (new version if available)
-// status.channel: "canary" | "stable"
-
-if (status.hasUpdate) {
-  // Download (uses patch if available, falls back to full bundle)
-  await updater.downloadUpdate();
-
-  // Apply on next relaunch
-  await updater.applyUpdate();
-
-  // Or: apply immediately (relaunches app)
-  await updater.applyUpdate({ relaunch: true });
-}
-
-// One-liner
-await updater.checkAndApply({ silent: true });
+```bash
+aws s3 cp artifacts/ s3://mybucket/releases/ --recursive
 ```
 
-## Recommended Startup Pattern
+### rsync to nginx / CDN origin
 
-```typescript
-// src/bun/index.ts
-import { Updater } from "electrobun/bun";
-
-// Check in background, don't block app launch
-setTimeout(async () => {
-  try {
-    const updater = new Updater();
-    await updater.checkAndApply({ silent: true });
-  } catch (e) {
-    console.error("Update check failed:", e);
-  }
-}, 3000); // 3s after launch
+```bash
+rsync -avz artifacts/ user@server:/var/www/updates/
 ```
+
+### GitHub Releases (simple, free)
+
+Upload artifacts as release assets. Set `baseUrl` to the GitHub Releases download URL:
+```
+https://github.com/{owner}/{repo}/releases/download/{tag}/
+```
+
+Note: GitHub Releases don't support patch files efficiently (they're all separate assets). Use a CDN if patch generation is important.
+
+---
 
 ## Release Checklist
 
-- [ ] Bump `app.version` in `electrobun.config.ts`
-- [ ] Set all signing env vars: `ELECTROBUN_DEVELOPER_ID`, `ELECTROBUN_APPLEID`, `ELECTROBUN_APPLEIDPASS`, `ELECTROBUN_TEAMID`
-- [ ] Run `electrobun build --env=canary` (or `stable`)
-- [ ] Verify `artifacts/` contains: `.tar.zst`, `.patch` (if not first release), `update.json`, `.dmg`
-- [ ] Upload all artifacts to `release.baseUrl`
-- [ ] Verify: `curl <baseUrl>/<os>-<arch>-update.json` returns valid JSON with correct version
-- [ ] Test update in a running older version of the app
+Before every release:
 
-## Common Issues
+```
+[ ] Bump version in electrobun.config.ts
+[ ] Set release.baseUrl pointing to your static host
+[ ] Confirm build.mac.codesign + notarize: true (macOS)
+[ ] Confirm ELECTROBUN_DEVELOPER_ID is set in CI
+[ ] Confirm ELECTROBUN_APPLEID / APPLEIDPASS / TEAMID are in CI secrets
+[ ] Build: electrobun build --env=stable (or canary)
+[ ] Verify artifacts/ contains:
+    - {channel}-{os}-{arch}-update.json  (for each platform)
+    - {channel}-{os}-{arch}-{AppName}.{ext}.tar.zst (for each platform)
+    - {channel}-{os}-{arch}-{hash}.patch (if previous version published)
+    - Installer files (DMG / ZIP / AppImage)
+[ ] Upload all artifacts/ files to baseUrl host
+[ ] Verify: curl https://updates.example.com/stable-macos-arm64-update.json
+[ ] Tag the release in git
+```
 
-1. **No patch file generated** → Previous release `.tar.zst` not found at `baseUrl`. First release always skips patch.
-2. **Update not detected** → `update.json` URL is wrong. Must be `<baseUrl>/macos-arm64-update.json` (no version number in this file's name).
-3. **`checkForUpdates()` returns `hasUpdate: false`** → App version matches `update.json` version. Bump `app.version`.
-4. **Large patch size** → Binary assets changed. Put large static files in `build.copy` to exclude from bundle diff.
+---
+
+## Common Mistakes
+
+| Mistake | Result | Fix |
+|---------|--------|-----|
+| `baseUrl` missing or wrong | Updates silently never trigger | Set `release.baseUrl` + verify with curl |
+| Uploaded to wrong path | 404 on update check | Artifacts must be at root of `baseUrl`, flat — no subdirectories |
+| Skipped codesign | macOS users get "damaged app" | Set `codesign: true` + provide signing env vars |
+| Skipped notarize | Gatekeeper blocks on first launch | Set `notarize: true` — required for distribution |
+| Wrong OS string in filename | Update fails silently | OS is `macos` / `win` / `linux` — not `darwin` / `windows` |
+| Patch generated before new tarball uploaded | Patch references tarball that doesn't exist | Upload tarballs before running `checkForUpdate` |
+| `release.baseUrl` has no trailing slash | URL construction breaks | Always end `baseUrl` with `/` |

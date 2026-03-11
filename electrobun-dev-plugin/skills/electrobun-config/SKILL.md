@@ -26,6 +26,7 @@ export default {
     // Output directories
     buildFolder: "build",            // Where built apps go (default: "build")
     artifactFolder: "artifacts",     // Where release artifacts go (default: "artifacts")
+    targets: "current",              // Target platforms; "current" = host platform (default: "current")
 
     // Bun main process bundle
     bun: {
@@ -50,7 +51,7 @@ export default {
 
     // ASAR archive (packs Resources into a single file — reduces file count)
     useAsar: false,                  // default: false
-    asarUnpack: ["*.dylib", "*.so"], // Glob patterns excluded from ASAR (native libs)
+    asarUnpack: ["*.node", "*.dll", "*.dylib", "*.so"],  // default — native libs always unpacked
 
     // Version overrides (pin runtime versions — test thoroughly before use)
     cefVersion: undefined,           // e.g. "CEF_128+chromium-128.0.6613.84"
