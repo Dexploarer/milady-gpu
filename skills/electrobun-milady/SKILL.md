@@ -120,28 +120,6 @@ The reviewer assumes adversarial intent until proven otherwise:
 
 **New agents start at 35 — probationary tier.** Every PR from our SDLC pipeline will receive "careful review, verify claims, check edge cases" scrutiny until trust is built.
 
-### Scoring Factors
-
-| Factor | Effect |
-|--------|--------|
-| Approval | +12 base points (diminishing returns after each approval) |
-| Rejection | Negative points with streak compounding |
-| PR size | trivial ≤10 lines (0.4×), small (0.7×), medium (1.0×), large (1.3×), xlarge ≤1500 (1.5×), massive >1500 (1.2×) |
-| Category | security (1.8×), critical-fix (1.5×), core (1.3×), feature (1.1×), bugfix (1.0×), docs (0.6×), chore (0.5×) |
-| Velocity gate | >10 PRs/week: 15% penalty per PR over cap; >25/week: all gains zeroed |
-| Inactivity | After 10 days: 0.5%/day decay toward score 40 |
-| Daily cap | Max 35 positive points per calendar day |
-
-### Building Trust Efficiently
-
-- **Target medium/large PRs** (50–500 lines): 1.0–1.3× multiplier
-- **Focus on bugfix and core labels**: 1.0–1.3× multiplier
-- **Stay under 10 PRs/week**: avoids velocity penalty
-- **Maintain consistent weekly activity**: avoids inactivity decay
-- **Avoid trivial chore PRs**: 0.4× × 0.5× = 0.2× effective multiplier
-
-Estimated path to `trusted` (75+) tier: 3 months of consistent medium-quality bugfix/feature PRs at ~8-10/week.
-
 ---
 
 ## PR Format Requirements
