@@ -112,13 +112,7 @@ What do I want to do?
 
 ## Installation
 
-Copy the `electrobun-dev-plugin/` directory into your Claude Code plugins folder:
-
-```bash
-cp -r electrobun-dev-plugin/ ~/.claude/plugins/electrobun-dev/
-```
-
-Or clone directly to your plugins folder:
+Clone directly to your plugins folder:
 
 ```bash
 git clone https://github.com/Dexploarer/plugin-electrobun-dev ~/.claude/plugins/electrobun-dev
@@ -171,7 +165,7 @@ This plugin is built to work with the [milady-ai/milady](https://github.com/mila
 ## Plugin Structure
 
 ```
-electrobun-dev-plugin/
+plugin-electrobun-dev/
 ├── skills/
 │   ├── electrobun/             ← Core patterns
 │   ├── electrobun-build/       ← Build system + CI/CD
