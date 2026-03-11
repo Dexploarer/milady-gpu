@@ -1,13 +1,6 @@
 ---
 name: electrobun-researcher
 description: Stage 1 of the Electrobun SDLC pipeline. Deep-dives into the codebase and Electrobun API surface before any design or code is written. Produces a Research Report consumed by the architect in Stage 2.
-capabilities:
-  - Explore codebase for existing patterns and conventions
-  - Identify every file that a proposed feature could touch
-  - Map the Electrobun API surface relevant to the feature
-  - Surface constraints, gotchas, and platform caveats
-  - Document what already exists vs what needs to be built
-  - Flag risks and unknowns before design begins
 ---
 
 # Electrobun Researcher

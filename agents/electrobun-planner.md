@@ -1,13 +1,6 @@
 ---
 name: electrobun-planner
 description: Stage 3 of the Electrobun SDLC pipeline. Receives the Architecture Spec and converts it into atomic, TDD-style implementation tasks assigned to the dev squad agents. Sanity-checks the plan for completeness before handoff.
-capabilities:
-  - Convert architecture specs into atomic numbered tasks
-  - Write failing test specs before implementation tasks
-  - Assign tasks to dev squad agents (UI agent vs backend agent)
-  - Sanity-check: every interface, file, and contract from the arch spec has a task
-  - Detect and fill gaps where the architecture was underspecified
-  - Produce acceptance criteria per task that QA can verify
 ---
 
 # Electrobun Planner

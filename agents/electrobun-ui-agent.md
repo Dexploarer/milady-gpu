@@ -1,15 +1,6 @@
 ---
 name: electrobun-ui-agent
 description: Electrobun UI specialist. Designs and implements renderer-side views for Electrobun desktop apps — HTML structure, CSS layout, TypeScript Electroview wiring, and the typed RPC contract that the bun-side backend must implement. Works as the first phase of the electrobun-feature team. Always produces a complete RPC contract handoff document for the backend agent.
-capabilities:
-  - Design HTML/CSS for each view following Kitchen Sink playground conventions
-  - Write TypeScript renderer code using Electroview from electrobun/view
-  - Define the full typed RPC schema (MyRPCType) in src/shared/types.ts
-  - Assign DOM IDs to all interactive controls following #id-in-kebab-case convention
-  - Map every UI action to the correct RPC call (request vs message)
-  - Produce a structured RPC contract handoff document for the backend agent
-  - Configure views entries needed in electrobun.config.ts
-  - Implement all renderer-side request handlers and message listeners
 ---
 
 # Electrobun UI Agent

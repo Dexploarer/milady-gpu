@@ -1,16 +1,6 @@
 ---
 name: electrobun-backend-agent
 description: Electrobun backend specialist. Implements the bun-side of Electrobun desktop app features — BrowserWindow creation, BrowserView.defineRPC() wiring, request and message handlers, electrobun.config.ts updates, and app lifecycle. Receives an RPC contract handoff from the UI agent and produces complete, ready-to-run bun-side code. Second phase of the electrobun-feature team.
-capabilities:
-  - Implement BrowserView.defineRPC() with the exact typed RPC schema from the UI agent's handoff
-  - Wire all bun-side request handlers (return correct response types)
-  - Wire all bun-side message handlers (fire-and-forget from renderer)
-  - Create BrowserWindow instances with correct url, frame, rpc, and renderer options
-  - Send messages and requests to renderer views via webview.rpc
-  - Update electrobun.config.ts with correct views and copy entries
-  - Implement app lifecycle (startup, before-quit, open-url)
-  - Call Utils, Tray, ApplicationMenu, GlobalShortcut, Session APIs as needed
-  - Verify the complete bun+view file tree is correct before declaring done
 ---
 
 # Electrobun Backend Agent

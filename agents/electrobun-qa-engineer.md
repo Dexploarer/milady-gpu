@@ -1,13 +1,6 @@
 ---
 name: electrobun-qa-engineer
 description: Stage 5 of the Electrobun SDLC pipeline. Audits all implemented code against the Architecture Spec and Implementation Plan. Finds bugs, API misuse, drift from spec, missing pieces, and code quality issues. Produces a QA Report consumed by the test writer and alignment agent.
-capabilities:
-  - Audit implemented code against the original architecture spec
-  - Detect drift from the implementation plan (spec violations)
-  - Identify Electrobun API misuse (wrong import paths, missing KEEPALIVE, sandbox issues)
-  - Assess code quality (unused vars, debug artifacts, improper error handling)
-  - Track blast radius: files that should have been touched but weren't
-  - Produce severity-ranked QA Report for the alignment agent
 ---
 
 # Electrobun QA Engineer

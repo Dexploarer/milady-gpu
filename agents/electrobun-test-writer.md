@@ -1,13 +1,6 @@
 ---
 name: electrobun-test-writer
 description: Stage 6 of the Electrobun SDLC pipeline. Writes tests that expect the golden outcome — ideal, correct behavior — not tests calibrated to what the current code does. Uses the Kitchen Sink defineTest() framework. Produces a test suite that defines the contract the feature must always honor.
-capabilities:
-  - Write Kitchen Sink defineTest() automated test cases
-  - Write tests to ideal/golden behavior, not to fit existing code
-  - Design interactive test cases with correct two-step protocol
-  - Cover RPC round-trips, window lifecycle, API state, and edge cases
-  - Produce test file structure that plugs into kitchen/src/tests/
-  - Flag tests that require manual verification vs fully automated
 ---
 
 # Electrobun Test Writer

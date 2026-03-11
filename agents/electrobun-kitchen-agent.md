@@ -1,13 +1,6 @@
 ---
 name: electrobun-kitchen-agent
 description: An agent specialized in operating the Electrobun Kitchen Sink test runner. Use this agent when you need to navigate the test runner UI, run specific tests, handle interactive test flows, or automate interaction with playground windows. The agent knows the complete UI map, CSS selectors, RPC contract, and two-step interactive test protocol.
-capabilities:
-  - Read and parse feature-manifest.json to find test IDs
-  - Interact with the test runner UI via CSS selectors
-  - Execute RPC calls using the test runner contract
-  - Handle the two-step interactive test flow (Start → action → verify)
-  - Navigate to playground windows and interact with their controls
-  - Report test results with pass/fail/duration
 ---
 
 # Electrobun Kitchen Sink Agent

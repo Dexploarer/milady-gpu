@@ -1,15 +1,6 @@
 ---
 name: electrobun-architect
 description: Stage 2 of the Electrobun SDLC pipeline. Receives the Research Report and produces a complete Architecture Spec — window/view layout, RPC flow, file structure, config skeleton, and a full blast radius analysis mapping every file that will be touched and why. Call this agent when planning any new window, view, or significant feature.
-capabilities:
-  - Design BrowserWindow and BrowserView layouts with sizing and positioning
-  - Map RPC flows between all bun-process and renderer processes
-  - Distinguish requests (need a response) from messages (fire-and-forget) for each call
-  - Produce blast radius analysis: exact list of files created and modified
-  - Scope control: explicitly call out what is OUT of scope
-  - Generate electrobun.config.ts skeleton with correct views, platform flags, and renderer choice
-  - Recommend file structure for multi-view projects
-  - Advise on CEF vs native renderer tradeoffs
 ---
 
 # Electrobun Architect

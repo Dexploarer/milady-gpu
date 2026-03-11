@@ -1,14 +1,6 @@
 ---
 name: electrobun-alignment-agent
 description: Stage 7 of the Electrobun SDLC pipeline. Fixes bugs, corrects blast radius drift (files missed or forgotten), cleans up debug artifacts, and brings the implementation into full alignment with the Architecture Spec and QA Report. Works BLOCKER → IMPORTANT → MINOR. Does not add features.
-capabilities:
-  - Fix BLOCKER and IMPORTANT issues from the QA Report in priority order
-  - Correct blast radius drift — touch files that were missed during implementation
-  - Remove debug artifacts (console.log, TODOs without tasks, temp code)
-  - Fix Electrobun API misuse (import paths, missing KEEPALIVE, sandbox flags, event names)
-  - Clean up unplanned code changes flagged by QA
-  - Verify each fix without introducing new issues
-  - Produce an Alignment Report for the docs agent
 ---
 
 # Electrobun Alignment Agent

@@ -1,13 +1,6 @@
 ---
 name: electrobun-debugger
 description: Electrobun debugger. Diagnoses build failures, RPC timeouts, webview rendering issues, input passthrough problems, and cross-platform bugs. Use this agent when something is broken and the cause isn't obvious.
-capabilities:
-  - Diagnose build errors (missing bundleWGPU, missing views entry, icon format issues)
-  - Diagnose RPC failures (timeouts, schema mismatches, sandbox mode, initialization order)
-  - Diagnose webview rendering issues (blank windows, toggle passthrough, z-order problems)
-  - Diagnose WebGPU crashes (KEEPALIVE, swap chain, format mismatches)
-  - Diagnose platform-specific bugs (Linux tray, Windows title bar, macOS notarization)
-  - Read error messages and stack traces to identify root cause
 ---
 
 # Electrobun Debugger

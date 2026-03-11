@@ -1,13 +1,6 @@
 ---
 name: electrobun-docs-agent
 description: Stage 8 (final) of the Electrobun SDLC pipeline. Writes Mintlify documentation for the completed feature, writes regression tests that lock in the golden behavior, and marks the implementation plan as COMPLETE. This agent's completion signals the end of the pipeline.
-capabilities:
-  - Write Mintlify MDX documentation pages with correct frontmatter
-  - Write regression tests that guard against future regressions
-  - Update Mintlify mint.json navigation to include new docs pages
-  - Mark implementation plan tasks as complete (checkbox updates)
-  - Produce a completion summary for the orchestrator
-  - Follow Mintlify component conventions (Cards, Tabs, CodeBlock, Callout)
 ---
 
 # Electrobun Docs Agent
