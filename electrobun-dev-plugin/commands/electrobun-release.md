@@ -1,58 +1,76 @@
 ---
 name: electrobun-release
-description: Guided step-by-step release workflow for Electrobun apps — verifies config, checks signing identity, builds, notarizes (macOS), and configures the auto-updater.
+description: Guided step-by-step release workflow for Electrobun apps — version bump, build, artifact verification, upload to CDN, and auto-updater verification.
 ---
 
-Walk through the full release workflow for an Electrobun app.
+Walk through the full Electrobun release workflow.
 
 ## Steps
 
-1. **Read `electrobun.config.ts`** and verify the release section exists. If `release.baseUrl` or `generatePatch` is missing, add them and ask the user for the base URL.
+1. **Read current state:**
+   - `app.version` from `electrobun.config.ts`
+   - `release.baseUrl` from config
+   - Contents of `artifacts/` (if any)
 
-2. **Check app metadata** — confirm `app.version` is correct. Ask: "Is version X.Y.Z correct for this release?"
+2. **Version check** — Ask: "Current version is X.Y.Z. Is this correct for the release, or do you want to bump it?"
+   - If bump: edit `app.version` in `electrobun.config.ts` and confirm
+   - Remind: canary version convention: `1.2.3-canary.1`, stable: `1.2.3`
 
-3. **Platform check** — ask which platform(s) they're releasing for: macOS / Windows / Linux / all.
-
-4. **For macOS — verify code signing:**
-   ```bash
-   security find-identity -v -p codesigning
+3. **Check `release.baseUrl`** — If missing, ask for it and add to config:
+   ```typescript
+   release: {
+     baseUrl: "https://your-cdn.com/releases/appname",
+     generatePatch: true,
+   }
    ```
-   - If no "Developer ID Application" identity is found, explain they need to enroll in Apple Developer Program.
-   - Confirm the identity in `electrobun.config.ts` matches exactly (including the team ID in parentheses).
 
-5. **For macOS — check notarization env vars:**
+4. **Check signing credentials:**
    ```bash
-   echo "APPLE_ID: ${APPLE_ID:-NOT SET}"
-   echo "APPLE_PASSWORD: ${APPLE_PASSWORD:-NOT SET}"
+   echo "DEVELOPER_ID: ${ELECTROBUN_DEVELOPER_ID:-❌ NOT SET}"
+   echo "APPLE_ID: ${ELECTROBUN_APPLEID:-❌ NOT SET}"
+   echo "APPLE_PASS: ${ELECTROBUN_APPLEIDPASS:-❌ NOT SET}"
+   echo "TEAM_ID: ${ELECTROBUN_TEAMID:-❌ NOT SET}"
    ```
-   - If not set, guide the user: "Set APPLE_ID and APPLE_PASSWORD (an app-specific password from appleid.apple.com) before building."
+   Stop and guide the user to set any missing vars before continuing.
+
+5. **Ask which channel:** canary (internal testing) or stable (production)?
 
 6. **Run the build:**
    ```bash
-   electrobun build
-   ```
-   - If build fails, show the error and diagnose.
-
-7. **After build — verify the output:**
-   - macOS: check `build/*.app` is code-signed
-     ```bash
-     codesign -dv --verbose=4 build/<AppName>.app
-     spctl --assess --verbose build/<AppName>.app
-     ```
-   - Windows: check `build/*.exe` exists
-
-8. **Configure the Updater** — verify or add update check to `src/bun/index.ts`:
-   ```typescript
-   import { Updater } from "electrobun/bun";
-
-   const updater = new Updater();
-   updater.checkForUpdates().then(async (status) => {
-     if (status.hasUpdate) {
-       console.log("Update available:", status.version);
-       await updater.downloadUpdate();
-       await updater.applyUpdate();
-     }
-   }).catch(console.error);
+   electrobun build --env=<canary|stable>
    ```
 
-9. **Summarize** what was done and what the user needs to do next (upload artifacts to `release.baseUrl`, bump version for next release, etc.).
+7. **Verify artifacts** — List `artifacts/` and confirm:
+   - [ ] `.tar.zst` bundle present
+   - [ ] `.patch` file present (if not first release, warn if missing)
+   - [ ] `update.json` present — show version and url fields
+   - [ ] `.dmg` present (macOS)
+
+8. **Upload artifacts** — Ask how they're hosting (S3 / R2 / rsync / other):
+
+   **S3:**
+   ```bash
+   aws s3 sync artifacts/ s3://<bucket>/releases/<appname>/ --acl public-read
+   ```
+
+   **Cloudflare R2:**
+   ```bash
+   rclone sync artifacts/ r2:<bucket>/releases/<appname>/
+   ```
+
+   **rsync:**
+   ```bash
+   rsync -avz artifacts/ user@server:/var/www/releases/<appname>/
+   ```
+
+   Run the command, confirm exit 0.
+
+9. **Verify update.json is reachable:**
+   ```bash
+   curl -s "<baseUrl>/macos-arm64-update.json" | jq .version
+   ```
+   Expected: the new version string.
+
+10. **Confirm** — Tell the user: "Release v<version> is live. Running apps on the previous version will detect this update on their next check."
+
+11. **Suggest:** Bump `app.version` to the next pre-release version now to avoid accidentally releasing the same version again.
