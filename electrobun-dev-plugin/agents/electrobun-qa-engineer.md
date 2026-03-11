@@ -86,6 +86,18 @@ Check each implemented file for:
 - Type assertions (`as any`, `as unknown`) without comment explaining why (flag as IMPORTANT)
 - Hardcoded values that should be constants or config (flag as MINOR)
 
+### Dimension 6: milady Compatibility (if targeting milady-ai/milady)
+
+If this code will be submitted as a PR to `milady-ai/milady`, additionally check:
+- **Biome compliance:** `bunx biome check --diagnostic-level=error` must pass (milady uses Biome, not ESLint)
+- **No `any` types:** All `any` usages must have inline comment explaining why — flag each one
+- **File LOC:** Flag any file exceeding ~500 lines as IMPORTANT (milady reviewer flags these)
+- **Test coverage:** Bug fixes without regression test = BLOCKER; features without unit tests = BLOCKER
+- **Coverage thresholds:** vitest.config.ts must show ≥25% lines/functions/statements, ≥15% branches
+- **DB changes:** If any route/adapter/query logic changed, `bun run db:check` must be noted in QA report
+- **Security surface:** Any new dependency must be imported in `src/` code — flag transitive-only deps
+- **Secrets:** Scan for any hardcoded credentials, API keys, phone numbers, or real config values
+
 ## Severity Levels
 
 - **BLOCKER**: Feature won't work correctly or will crash. Must fix before test writing.
